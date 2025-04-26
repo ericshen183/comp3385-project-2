@@ -3,60 +3,74 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    // Register
-    public function register(Request $request)
+    /**
+     * Get a JWT via given credentials.
+     *
+     * @return JsonResponse
+     */
+    public function login(): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6|confirmed', // add password_confirmation
-        ]);
+        $credentials = request(['email', 'password']);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        $token = JWTAuth::fromUser($user);
-
-        return response()->json([
-            'message' => 'User registered successfully',
-            'user' => $user,
-            'token' => $token
-        ], 201);
-    }
-
-    // Login
-    public function login(Request $request)
-    {
-        $credentials = $request->only('email', 'password');
-
-        if (!$token = JWTAuth::attempt($credentials)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
+        if ( ! $token = auth()->attempt($credentials)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
         return response()->json([
-            'token' => $token,
-            'user' => auth()->user()
+            'message'      => 'Login Successful!',
+            'access_token' => $token,
+            'user_id'      => Auth::id(),
         ]);
     }
 
-    // Logout
-    public function logout()
+    public function register(Request $request): JsonResponse
+    {
+        // Validate incoming request data
+        $validatedData = $request->validate([
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|string|email|max:255|unique:users',
+            'password'  => 'required|string|min:8',
+            'location'  => 'string|max:255',
+            'biography' => 'nullable|string',
+            'photo'     => 'nullable|image|mimes:jpeg,png,jpg,gif',
+        ]);
+
+        // Handle file upload (if a photo is provided)
+        $photoPath = $request->file('photo')->storeAs('photos', $request->file('photo')->getClientOriginalName(),
+            'public');
+
+        // Create and save the user
+        $user = new User([
+            'name'      => $validatedData['name'],
+            'email'     => $validatedData['email'],
+            'password'  => $validatedData['password'],
+            'location'  => $validatedData['location'],
+            'biography' => $validatedData['biography'],
+            'photo'     => $photoPath,
+        ]);
+        $user->save();
+
+        return response()->json(['message' => 'User registered successfully', 'user' => $user], 201);
+    }
+
+    /**
+     * Log the user out (Invalidate the token).
+     *
+     * @return JsonResponse
+     */
+    public function logout(): JsonResponse
     {
         auth()->logout();
+
         return response()->json(['message' => 'Successfully logged out']);
     }
 }
+
+
+

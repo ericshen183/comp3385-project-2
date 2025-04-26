@@ -1,30 +1,37 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\MovieController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\CarController;
+use App\Http\Controllers\FavouriteController;
 
-Route::get('/test', function () {
-    return response()->json(['message' => 'API route is working!']);
-});
+// Group all API routes under the 'api/v1' prefix for version management
 
-// ✅ Public routes (no auth)
-Route::prefix('v1/auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-});
+    // Authentication Routes
+    Route::post('/auth/register', [AuthController::class, 'register']);
+    // routes/api.php
+    Route::post('/auth/login', [AuthController::class, 'login']);
 
-// ✅ Protected routes
-Route::middleware('auth:api')->group(function () {
-    Route::post('/v1/auth/logout', [AuthController::class, 'logout']);
-    Route::post('/v1/users/{user_id}', [ProfileController::class, 'update']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-    Route::get('/v1/movies', [MovieController::class, 'index']);
-    Route::post('/v1/movies', [MovieController::class, 'store']);
-
-    Route::get('/v1/user', function (Request $request) {
-        return response()->json($request->user());
+    // User Routes
+    Route::middleware('auth:api')->group(function () {
+        Route::get('/user', [AuthController::class, 'getAuthenticatedUser']); // Get details of the authenticated user
+        Route::get('/users/{user}', [UserController::class, 'show']); // Get details of a specific user
+        Route::put('/users/{user}', [UserController::class, 'update']); // Update a specific user
     });
-});
+
+    // Car Routes
+    Route::get('/cars', [CarController::class, 'index']); // List all cars
+    Route::post('/cars', [CarController::class, 'store']); // Add a new car
+    Route::get('/cars/{car}', [CarController::class, 'show']); // Get details of a specific car
+
+    // Favourite Routes
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/cars/{car}/favourite', [FavouriteController::class, 'store']); // Add car to favourites
+        Route::get('/users/{user}/favourites', [FavouriteController::class, 'index']); // Get user's favourite cars
+    });
+
+    // Search Route
+    Route::get('/search', [CarController::class, 'search']); // Search for cars by make or model

@@ -22,10 +22,12 @@ use App\Http\Controllers\FavouriteController;
         Route::put('/users/{user}', [UserController::class, 'update']); // Update a specific user
     });
 
-    // Car Routes
-    Route::get('/cars', [CarController::class, 'index']); // List all cars
-    Route::post('/cars', [CarController::class, 'store']); // Add a new car
-    Route::get('/cars/{car}', [CarController::class, 'show']); // Get details of a specific car
+    // Version 1 API Routes
+    Route::prefix('v1')->group(function () {
+        Route::get('/cars', [CarController::class, 'index']);
+        Route::post('/cars', [CarController::class, 'store'])->middleware('auth:api');
+        Route::get('/cars/{car}', [CarController::class, 'show']);
+    });
 
     // Favourite Routes
     Route::middleware('auth:api')->group(function () {

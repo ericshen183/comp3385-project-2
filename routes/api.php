@@ -1,39 +1,28 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\CarController;
-use App\Http\Controllers\FavouriteController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
-// Group all API routes under the 'api/v1' prefix for version management
-
-    // Authentication Routes
+Route::prefix('api/v1')->group(function () {
+    // Authentication routes
     Route::post('/auth/register', [AuthController::class, 'register']);
-    // routes/api.php
     Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    // Cars routes
+    Route::get('/cars', [CarController::class, 'index']);
+    Route::post('/cars', [CarController::class, 'store'])->middleware('auth:sanctum');
+    Route::get('/cars/{car_id}', [CarController::class, 'show']);
+    Route::post('/cars/{car_id}/favourite', [CarController::class, 'favourite'])->middleware('auth:sanctum');
 
-    // User Routes
-    Route::middleware('auth:api')->group(function () {
-        Route::get('/user', [AuthController::class, 'getAuthenticatedUser']); // Get details of the authenticated user
-        Route::get('/users/{user}', [UserController::class, 'show']); // Get details of a specific user
-        Route::put('/users/{user}', [UserController::class, 'update']); // Update a specific user
-    });
+    // Search route
+    Route::get('/search', [SearchController::class, 'search']);
 
-    // Version 1 API Routes
-    Route::prefix('v1')->group(function () {
-        Route::get('/cars', [CarController::class, 'index']);
-        Route::post('/cars', [CarController::class, 'store'])->middleware('auth:api');
-        Route::get('/cars/{car}', [CarController::class, 'show']);
-    });
-
-    // Favourite Routes
-    Route::middleware('auth:api')->group(function () {
-        Route::post('/cars/{car}/favourite', [FavouriteController::class, 'store']); // Add car to favourites
-        Route::get('/users/{user}/favourites', [FavouriteController::class, 'index']); // Get user's favourite cars
-    });
-
-    // Search Route
-    Route::get('/search', [CarController::class, 'search']); // Search for cars by make or model
+    // Users routes
+    Route::post('/users/{user_id}', [UserController::class, 'update'])->middleware('auth:sanctum');
+    Route::post('/users/{user_id}/favourites', [UserController::class, 'addFavourite'])->middleware('auth:sanctum');
+});

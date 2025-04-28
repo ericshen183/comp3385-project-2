@@ -13,13 +13,15 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('email')->unique();
-            $table->string('password');
             $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
             $table->string('location')->nullable();
             $table->text('biography')->nullable();
-            $table->string('photo')->nullable();
-            $table->timestamps();
+            $table->string('photo')->nullable(); // Store file path for uploaded photos
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -43,7 +45,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('favourites'); // Drop favourites table first
+        Schema::dropIfExists('cars'); // Then drop cars table
+        Schema::dropIfExists('users'); // Finally, drop users table
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }

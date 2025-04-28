@@ -2,60 +2,76 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Car;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Car;
+use Illuminate\Support\Facades\Auth;
 
 class CarController extends Controller
 {
-    // GET /api/v1/cars
-    public function index()
+    public function index(Request $request)
     {
-        $cars = Car::all();
-        return response()->json($cars);
+        $limit = $request->query('limit', 10); // Default to 10 if no limit is provided
+        return response()->json(Car::latest()->take($limit)->get());
     }
 
-    // POST /api/v1/cars
     public function store(Request $request)
     {
-        $request->validate([
-            'description' => 'required',
-            'make' => 'required',
-            'model' => 'required',
-            'colour' => 'required',
-            'year' => 'required',
-            'transmission' => 'required',
-            'car_type' => 'required',
+        $validated = $request->validate([
+            'description' => 'required|string',
+            'make' => 'required|string',
+            'model' => 'required|string',
+            'colour' => 'required|string',
+            'year' => 'required|integer',
+            'transmission' => 'required|string',
+            'car_type' => 'required|string',
             'price' => 'required|numeric',
-            'photo' => 'nullable|image|max:2048'
+            'photo' => 'nullable|string',
         ]);
-
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('uploads/cars', 'public');
-        } else {
-            $path = null;
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $car = Car::create([
-            'description' => $request->description,
-            'make' => $request->make,
-            'model' => $request->model,
-            'colour' => $request->colour,
-            'year' => $request->year,
-            'transmission' => $request->transmission,
-            'car_type' => $request->car_type,
-            'price' => $request->price,
-            'photo' => $path,
-            'user_id' => auth()->id(),
-        ]);
-
-        return response()->json(['message' => 'Car created successfully', 'car' => $car], 201);
+        $car = Car::create(array_merge($validated, ['user_id' => $user->id]));
+        return response()->json($car, 201);
     }
 
-    // GET /api/v1/cars/{car_id}
-    public function show($id)
+    public function show($car_id)
     {
-        $car = Car::findOrFail($id);
+        $car = Car::findOrFail($car_id);
         return response()->json($car);
+    }
+
+    public function favourite($car_id)
+    {
+        $car = Car::findOrFail($car_id);
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        $favourite = $car->favourites()->create(['user_id' => $user->id]);
+        return response()->json($favourite, 201);
+    }
+
+    public function favouriteStatus($car_id)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $isFavourited = $user->favourites()->where('car_id', $car_id)->exists();
+        return response()->json(['isFavourited' => $isFavourited]);
+    }
+
+    public function removeFavourite($car_id)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $user->favourites()->where('car_id', $car_id)->delete();
+        return response()->json(['message' => 'Favourite removed successfully']);
     }
 }

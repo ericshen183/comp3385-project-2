@@ -35,8 +35,8 @@
         <textarea id="description" v-model="form.description" required></textarea>
       </div>
       <div>
-        <label for="photo">Photo URL:</label>
-        <input type="text" id="photo" v-model="form.photo" />
+        <label for="photo">Photo:</label>
+        <input type="file" id="photo" @change="handleFileUpload" />
       </div>
       <button type="submit">Add Car</button>
     </form>
@@ -59,18 +59,35 @@ export default {
         car_type: "",
         price: "",
         description: "",
-        photo: "",
       },
+      photo: null,
       error: null,
     };
   },
   methods: {
+    handleFileUpload(event) {
+      this.photo = event.target.files[0];
+    },
     async addCar() {
       try {
         this.error = null;
-        const response = await axios.post("/api/v1/cars", this.form, {
+        const formData = new FormData();
+        formData.append("make", this.form.make);
+        formData.append("model", this.form.model);
+        formData.append("year", this.form.year);
+        formData.append("colour", this.form.colour);
+        formData.append("transmission", this.form.transmission);
+        formData.append("car_type", this.form.car_type);
+        formData.append("price", this.form.price);
+        formData.append("description", this.form.description);
+        if (this.photo) {
+          formData.append("photo", this.photo);
+        }
+
+        const response = await axios.post("/api/v1/cars", formData, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            "Content-Type": "multipart/form-data",
           },
         });
         alert("Car added successfully!");

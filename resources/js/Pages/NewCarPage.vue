@@ -86,12 +86,50 @@ export default {
 <style scoped>
 .new-car-page {
   max-width: 600px;
-  margin: 0 auto;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
 }
-.new-car-page div {
-  margin-bottom: 10px;
+.new-car-page h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+.new-car-page form div {
+  margin-bottom: 15px;
+}
+.new-car-page label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+.new-car-page input,
+.new-car-page textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.new-car-page button {
+  display: block;
+  width: 100%;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.new-car-page button:hover {
+  background-color: #0056b3;
 }
 .error {
   color: red;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 10px;
 }
 </style>
